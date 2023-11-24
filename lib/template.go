@@ -58,12 +58,18 @@ type Properties struct {
 	Description string `json:"description,omitempty"`
 	Title       string `json:"title,omitempty"`
 	Type        string `json:"type,omitempty"`
+	Items       *Item  `json:"items,omitempty"`
+}
+
+type Item struct {
+	Type       string                `json:"type,omitempty"`
+	Properties map[string]Properties `json:"properties,omitempty"`
 }
 
 type RR struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              map[string]string `json:"spec,omitempty"`
+	Spec              map[string]interface{} `json:"spec,omitempty"`
 }
 
 func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
@@ -90,18 +96,13 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 				"backstage.io/kubernetes-id": rrCRD.Spec.Names.Kind,
 			},
 		},
-		Spec: map[string]string{},
+		Spec: map[string]interface{}{},
 	}
 
 	//Generate the parameter properties based on the CRD
 	props := map[string]Properties{}
 	for key, prop := range rrCRD.Spec.Versions[0].Schema.OpenAPIV3Schema.Properties["spec"].Properties {
-		props[key] = Properties{
-			Description: prop.Description,
-			Title:       "Spec." + strings.Title(key),
-			Type:        prop.Type,
-		}
-		rrManifestTemplate.Spec[key] = fmt.Sprintf("${{ parameters.%s }}", key)
+		props[key] = genProperties("Spec", key, prop, rrManifestTemplate.Spec)
 	}
 
 	props["namespace"] = Properties{
@@ -139,7 +140,36 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 
 	}
 
+	fmt.Println(string(templateBytes))
+
 	return os.WriteFile(filepath.Join(kratixDir, "output", "backstage", promise.GetName()+"-template.yaml"), templateBytes, 0777)
+}
+
+func genProperties(titlePrefix, key string, prop v1.JSONSchemaProps, rrManifestTemplateSpec map[string]interface{}) Properties {
+	p := Properties{
+		Description: prop.Description,
+		Title:       titlePrefix + "." + strings.Title(key),
+	}
+
+	if prop.Type == "array" {
+		rrManifestTemplateSpec[key] = map[string]interface{}{}
+		p.Items = &Item{
+			Properties: map[string]Properties{},
+			Type:       "object",
+		}
+		for subKey, subProp := range prop.Items.Schema.Properties {
+			p.Items.Properties[subKey] = genProperties(p.Title, subKey, subProp, rrManifestTemplateSpec[key].(map[string]interface{}))
+		}
+	} else if prop.Type == "object" {
+		//TODO
+	} else {
+	}
+	if titlePrefix == "Spec" {
+		rrManifestTemplateSpec[key] = fmt.Sprintf("${{ parameters.%s }}", key)
+	}
+
+	p.Type = prop.Type
+	return p
 }
 
 func generateBackstageTemplateWithoutProperties(rrCRD *v1.CustomResourceDefinition) (Template, error) {

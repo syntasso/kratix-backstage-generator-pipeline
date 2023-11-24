@@ -71,7 +71,7 @@ spec:
 		})
 	})
 
-	Describe("promise workflows", func() {
+	Describe("simple promise workflows", func() {
 		BeforeEach(func() {
 			err := os.WriteFile(filepath.Join(kratixDir, "input", "object.yaml"), []byte(`---
 apiVersion: platform.kratix.io/v1alpha1
@@ -176,6 +176,143 @@ spec:
           Size of this Redis deployment. If small, it deploy redis with a single replica; if large, deploy redis with 3 replicas.
         title: Spec.Size
         type: string
+    required:
+    - namespace
+    - name
+    title: Redis as a Service
+  steps:
+  - action: kubernetes:apply
+    id: k-apply
+    input:
+      manifest: |
+        apiVersion: marketplace.kratix.io/v1alpha1
+        kind: redis
+        metadata:
+          creationTimestamp: null
+          labels:
+            backstage.io/kubernetes-id: redis
+          name: ${{ parameters.name }}
+          namespace: ${{ parameters.namespace}}
+        spec:
+          size: ${{ parameters.size }}
+      namespaced: true
+    name: Create a redis
+  type: service
+`))
+		})
+	})
+
+	FDescribe("complex promise workflows", func() {
+		BeforeEach(func() {
+			err := os.WriteFile(filepath.Join(kratixDir, "input", "object.yaml"), []byte(`---
+apiVersion: platform.kratix.io/v1alpha1
+kind: Promise
+metadata:
+  name: redis
+spec:
+  api:
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: redis.marketplace.kratix.io
+    spec:
+      group: marketplace.kratix.io
+      names:
+        kind: redis
+        plural: redis
+        singular: redis
+      scope: Namespaced
+      versions:
+      - name: v1alpha1
+        schema:
+          openAPIV3Schema:
+            properties:
+              spec:
+                properties:
+                  env:
+                    default: dev
+                    type: string
+                  plugins:
+                    type: array
+                    default: []
+                    description: Plugins to install in the requested Redis
+                    items:
+                      description: Plugin defines a single Redis plugin.
+                      properties:
+                        downloadURL:
+                          description: DownloadURL is the custom url from where plugin
+                            has to be downloaded.
+                          type: string
+                        name:
+                          description: Name is the name of Redis plugin
+                          type: string
+                        version:
+                          description: Version is the version of Redis plugin
+                          type: string
+                      required:
+                      - name
+                      - version
+                      type: object
+                type: object
+            type: object
+        served: true
+        storage: true`), 0777)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("generates a valid component", func() {
+			Expect(lib.Generate(kratixDir, "promise", "redis")).To(Succeed())
+
+			fileContent, err := os.ReadFile(filepath.Join(kratixDir, "output", "backstage", "redis-template.yaml"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(string(fileContent)).To(Equal(`apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  creationTimestamp: null
+  description: Redis as a Service
+  name: redis-promise-template
+  tags:
+  - syntasso
+  - kratix
+  - experimental
+  title: Redis
+spec:
+  lifecycle: experimental
+  owner: kratix-platform
+  parameters:
+  - properties:
+      name:
+        description: Name for the request in the platform cluster
+        title: Metadata.Name
+        type: string
+      namespace:
+        description: Namespace for the request in the platform cluster
+        title: Metadata.Namespace
+        type: string
+      env:
+        title: Spec.Env
+        type: string
+      plugins:
+			  title: Spec.Plugins
+        type: array
+        ui:options:
+          addable: true
+          orderable: true
+          removable: true
+        items:
+          type: object
+          properties:
+            downloadURL:
+              title: Spec.Plugins[].DownloadURL
+              type: string
+              ui:widget: radio
+            name:
+              title: Spec.Plugins[].Name
+              type: string
+            version:
+              title: Spec.Plugins[].Version
+              type: string
+			plugins:
     required:
     - namespace
     - name
