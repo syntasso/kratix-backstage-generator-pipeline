@@ -1,0 +1,21 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    backstage.io/kubernetes-id: jenkins
+  description: Create a jenkins
+  links:
+  - icon: help
+    title: Support
+    url: https://github.com/syntasso/kratix-backstage
+  name: jenkins
+  title: jenkins Promise
+spec:
+  dependsOn:
+  - component:default/kratix
+  lifecycle: production
+  owner: kratix-platform
+  providesApis:
+  - jenkins-promise-api
+  type: promise

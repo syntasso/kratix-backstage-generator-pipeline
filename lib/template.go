@@ -91,8 +91,8 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 			Kind:       rrCRD.Spec.Names.Kind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "${{ parameters.name }}",
-			Namespace: "${{ parameters.namespace}}",
+			Name:      "${{ parameters.objname }}",
+			Namespace: "${{ parameters.objnamespace}}",
 			Labels: map[string]string{
 				"backstage.io/kubernetes-id": rrCRD.Spec.Names.Kind,
 			},
@@ -103,13 +103,13 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 	//Generate the parameter properties based on the CRD
 	props := map[string]Properties{}
 
-	props["namespace"] = Properties{
+	props["objnamespace"] = Properties{
 		Description: "Namespace for the request in the platform cluster",
 		Title:       "Namespace",
 		Type:        "string",
 	}
 
-	props["name"] = Properties{
+	props["objname"] = Properties{
 		Description: "Name for the request in the platform cluster",
 		Title:       "Name",
 		Type:        "string",

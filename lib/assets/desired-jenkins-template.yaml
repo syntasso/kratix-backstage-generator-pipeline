@@ -1,0 +1,83 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  creationTimestamp: null
+  description: Jenkin as a Service
+  name: jenkin-promise-template
+  tags:
+  - syntasso
+  - kratix
+  - experimental
+  title: Jenkin
+spec:
+  lifecycle: experimental
+  owner: kratix-platform
+  parameters:
+  - properties:
+      objname:
+        description: Name for the request in the platform cluster
+        title: Name
+        type: string
+      objnamespace:
+        description: Namespace for the request in the platform cluster
+        title: Namespace
+        type: string
+      spec:
+        properties:
+          basicAuth:
+            properties:
+              password:
+                description: Password for Jenkins
+                title: BasicAuth.Password
+                type: string
+              username:
+                description: Username for Jenkins
+                title: BasicAuth.Username
+                type: string
+            title: BasicAuth
+            type: object
+          env:
+            description: |
+              Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
+            title: Env
+            type: string
+          plugins:
+            description: Plugins to install in the requested Jenkins
+            items:
+              properties:
+                downloadURL:
+                  description: DownloadURL is the custom url from where plugin has
+                    to be downloaded.
+                  title: Plugins.DownloadURL
+                  type: string
+                name:
+                  description: Name is the name of Jenkins plugin
+                  title: Plugins.Name
+                  type: string
+                version:
+                  description: Version is the version of Jenkins plugin
+                  title: Plugins.Version
+                  type: string
+              type: object
+            title: Plugins
+            type: array
+        title: Spec
+        type: object
+    title: Jenkin as a Service
+  steps:
+  - action: kubernetes:apply
+    id: k-apply
+    input:
+      manifest: |
+        apiVersion: marketplace.kratix.io/v1alpha1
+        kind: jenkin
+        metadata:
+          creationTimestamp: null
+          labels:
+            backstage.io/kubernetes-id: jenkin
+          name: ${{ parameters.objname }}
+          namespace: ${{ parameters.objnamespace}}
+        spec: ${{ parameters.spec | dump }}
+      namespaced: true
+    name: Create a jenkin
+  type: service
