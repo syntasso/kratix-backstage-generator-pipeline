@@ -103,25 +103,24 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 	//Generate the parameter properties based on the CRD
 	props := map[string]Properties{}
 
-	props["metadata"] = Properties{
-		Type: "object",
-		Properties: map[string]Properties{
-			"Namespace": {
-				Description: "Namespace for the request in the platform cluster",
-				Title:       "Namespace",
-				Type:        "string",
-			},
-			"Name": {
-				Description: "Name for the request in the platform cluster",
-				Title:       "Name",
-				Type:        "string",
-			},
-		},
+	props["namespace"] = Properties{
+		Description: "Namespace for the request in the platform cluster",
+		Title:       "Namespace",
+		Type:        "string",
 	}
+
+	props["name"] = Properties{
+		Description: "Name for the request in the platform cluster",
+		Title:       "Name",
+		Type:        "string",
+	}
+
 	props["spec"] = Properties{
 		Type:       "object",
+		Title:      "Spec",
 		Properties: map[string]Properties{},
 	}
+
 	for key, prop := range rrCRD.Spec.Versions[0].Schema.OpenAPIV3Schema.Properties["spec"].Properties {
 		if prop.XPreserveUnknownFields == nil || !*prop.XPreserveUnknownFields {
 			props["spec"].Properties[key] = genProperties("", key, prop)
