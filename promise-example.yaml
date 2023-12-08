@@ -22,10 +22,6 @@ spec:
             properties:
               spec:
                 properties:
-                  config:
-                    type: object
-                    description: "additional config for jenkins"
-                    x-kubernetes-preserve-unknown-fields: true
                   env:
                     default: dev
                     description: |

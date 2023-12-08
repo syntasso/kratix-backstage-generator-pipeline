@@ -161,7 +161,8 @@ func genProperties(prefix, key string, prop v1.JSONSchemaProps) Properties {
 	}
 	p.Type = prop.Type
 
-	if prop.Type == "array" {
+	switch p.Type {
+	case "array":
 		p.Items = &Item{
 			Properties: map[string]Properties{},
 			Type:       "object",
@@ -171,7 +172,7 @@ func genProperties(prefix, key string, prop v1.JSONSchemaProps) Properties {
 				p.Items.Properties[subKey] = genProperties((p.Title + "."), subKey, subProp)
 			}
 		}
-	} else if prop.Type == "object" {
+	case "object":
 		if len(prop.Properties) > 0 {
 			p.Properties = map[string]Properties{}
 			for subKey, subProp := range prop.Properties {
@@ -180,7 +181,6 @@ func genProperties(prefix, key string, prop v1.JSONSchemaProps) Properties {
 				}
 			}
 		}
-	} else {
 	}
 
 	return p
