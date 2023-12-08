@@ -3,6 +3,9 @@ FROM --platform=$TARGETPLATFORM golang:1.21 as builder
 ARG TARGETARCH
 ARG TARGETOS
 
+LABEL org.opencontainers.image.authors "kratix@syntasso.io"
+LABEL org.opencontainers.image.source https://github.com/syntasso/kratix-backstage-generator-pipeline
+
 WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY go.mod go.mod

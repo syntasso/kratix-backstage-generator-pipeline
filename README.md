@@ -7,21 +7,20 @@ plugin to make Kubernetes requests. See [Kratix Backstage docs](https://kratix.i
 for setting up Backstage.
 
 ## Usage
-run `make build-and-load` to load the image into your platform cluster. Update
-your promises to have:
+
+Update your promises to have the following in its the Promise and Resource
+workflows
+
 ```
-- image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0
-  name: backstage
+- image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0 name:
+  backstage
 ```
 
-in the promise and resource workflows
 
 ## Example
 Checkout the `promise-example.yaml` file for an example.
 
 ```
-make build-and-load
-
 kubectl apply -f promise-example.com
 
 kubectl get pods -n kratix-platform-system
