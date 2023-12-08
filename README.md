@@ -5,7 +5,7 @@ Generate templates and components for your kratix promise automagically
 run `make build-and-load` to load the image into your platform cluster. Update
 your promises to have:
 ```
-              - image: ghcr.io/aclevername/kratix-backstage-generator-pipeline:v0.1.0
+              - image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0
                 name: backstage
 
 ```

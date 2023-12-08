@@ -12,7 +12,7 @@ func main() {
 		kratixDir = "/kratix"
 	}
 
-	err := lib.Generate(kratixDir, os.Getenv("KRATIX_WORKFLOW_TYPE"), os.Getenv("KRATIX_PROMISE"))
+	err := lib.Generate(kratixDir, os.Getenv("KRATIX_WORKFLOW_TYPE"), os.Getenv("KRATIX_PROMISE_NAME"))
 	if err != nil {
 		panic(err)
 	}

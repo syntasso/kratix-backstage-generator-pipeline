@@ -55,10 +55,11 @@ type Parameter struct {
 }
 
 type Properties struct {
-	Description string `json:"description,omitempty"`
-	Title       string `json:"title,omitempty"`
-	Type        string `json:"type,omitempty"`
-	Items       *Item  `json:"items,omitempty"`
+	Description string                `json:"description,omitempty"`
+	Title       string                `json:"title,omitempty"`
+	Type        string                `json:"type,omitempty"`
+	Items       *Item                 `json:"items,omitempty"`
+	Properties  map[string]Properties `json:"properties,omitempty"`
 }
 
 type Item struct {
@@ -69,7 +70,7 @@ type Item struct {
 type RR struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              map[string]interface{} `json:"spec,omitempty"`
+	Spec              string `json:"spec,omitempty"`
 }
 
 func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
@@ -96,25 +97,35 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 				"backstage.io/kubernetes-id": rrCRD.Spec.Names.Kind,
 			},
 		},
-		Spec: map[string]interface{}{},
+		Spec: "${{ parameters.spec | dump }}",
 	}
 
 	//Generate the parameter properties based on the CRD
 	props := map[string]Properties{}
+
+	props["metadata"] = Properties{
+		Type: "object",
+		Properties: map[string]Properties{
+			"Namespace": {
+				Description: "Namespace for the request in the platform cluster",
+				Title:       "Namespace",
+				Type:        "string",
+			},
+			"Name": {
+				Description: "Name for the request in the platform cluster",
+				Title:       "Name",
+				Type:        "string",
+			},
+		},
+	}
+	props["spec"] = Properties{
+		Type:       "object",
+		Properties: map[string]Properties{},
+	}
 	for key, prop := range rrCRD.Spec.Versions[0].Schema.OpenAPIV3Schema.Properties["spec"].Properties {
-		props[key] = genProperties("Spec", key, prop, rrManifestTemplate.Spec)
-	}
-
-	props["namespace"] = Properties{
-		Description: "Namespace for the request in the platform cluster",
-		Title:       "Metadata.Namespace",
-		Type:        "string",
-	}
-
-	props["name"] = Properties{
-		Description: "Name for the request in the platform cluster",
-		Title:       "Metadata.Name",
-		Type:        "string",
+		if prop.XPreserveUnknownFields == nil || !*prop.XPreserveUnknownFields {
+			props["spec"].Properties[key] = genProperties("", key, prop)
+		}
 	}
 	fmt.Println(props)
 
@@ -128,7 +139,6 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 	template.Spec.Parameters = []Parameter{
 		{
 			Properties: props,
-			Required:   append(rrCRD.Spec.Versions[0].Schema.OpenAPIV3Schema.Properties["spec"].Required, "namespace", "name"),
 			Title:      strings.Title(rrCRD.Spec.Names.Kind) + " as a Service",
 		},
 	}
@@ -145,30 +155,35 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 	return os.WriteFile(filepath.Join(kratixDir, "output", "backstage", promise.GetName()+"-template.yaml"), templateBytes, 0777)
 }
 
-func genProperties(titlePrefix, key string, prop v1.JSONSchemaProps, rrManifestTemplateSpec map[string]interface{}) Properties {
+func genProperties(prefix, key string, prop v1.JSONSchemaProps) Properties {
 	p := Properties{
 		Description: prop.Description,
-		Title:       titlePrefix + "." + strings.Title(key),
+		Title:       prefix + strings.Title(key),
 	}
+	p.Type = prop.Type
 
 	if prop.Type == "array" {
-		rrManifestTemplateSpec[key] = map[string]interface{}{}
 		p.Items = &Item{
 			Properties: map[string]Properties{},
 			Type:       "object",
 		}
 		for subKey, subProp := range prop.Items.Schema.Properties {
-			p.Items.Properties[subKey] = genProperties(p.Title, subKey, subProp, rrManifestTemplateSpec[key].(map[string]interface{}))
+			if subProp.XPreserveUnknownFields == nil || !*subProp.XPreserveUnknownFields {
+				p.Items.Properties[subKey] = genProperties((p.Title + "."), subKey, subProp)
+			}
 		}
 	} else if prop.Type == "object" {
-		//TODO
+		if len(prop.Properties) > 0 {
+			p.Properties = map[string]Properties{}
+			for subKey, subProp := range prop.Properties {
+				if subProp.XPreserveUnknownFields == nil || !*subProp.XPreserveUnknownFields {
+					p.Properties[subKey] = genProperties((p.Title + "."), subKey, subProp)
+				}
+			}
+		}
 	} else {
 	}
-	if titlePrefix == "Spec" {
-		rrManifestTemplateSpec[key] = fmt.Sprintf("${{ parameters.%s }}", key)
-	}
 
-	p.Type = prop.Type
 	return p
 }
 
