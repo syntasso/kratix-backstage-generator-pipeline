@@ -23,7 +23,7 @@ type Opts struct {
 func Generate(o Opts) error {
 	f, err := os.Open(o.Input)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open input file %s: %w", o.Input, err)
 	}
 	defer f.Close()
 
