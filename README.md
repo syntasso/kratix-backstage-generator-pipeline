@@ -45,7 +45,7 @@ Update your promises to have the following in its the Promise and Resource
 workflows
 
 ```
-- image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0
+- image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.2.0
   name: backstage
 ```
 

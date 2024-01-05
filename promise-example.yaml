@@ -98,7 +98,7 @@ spec:
           containers:
           - image: ghcr.io/syntasso/kratix-marketplace/jenkins-configure-pipeline:v0.1.0
             name: jenkins-promise-pipeline
-          - image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0
+          - image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.2.0
             name: backstage
     resource:
       configure:
@@ -111,5 +111,5 @@ spec:
           containers:
           - image: ghcr.io/syntasso/kratix-marketplace/jenkins-configure-pipeline:v0.1.0
             name: jenkins-configure-pipeline
-          - image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0
+          - image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.2.0
             name: backstage
