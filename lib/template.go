@@ -25,7 +25,7 @@ type Metadata struct {
 	metav1.ObjectMeta `json:",inline"`
 	Description       string   `json:"description,omitempty"`
 	Tags              []string `json:"tags,omitempty"`
-	Title             string   `json:"title,omitempty"`
+	Title             string   `json:"title"`
 }
 
 type TemplateSpec struct {
@@ -51,12 +51,12 @@ type Input struct {
 type Parameter struct {
 	Properties map[string]Properties `json:"properties,omitempty"`
 	Required   []string              `json:"required,omitempty"`
-	Title      string                `json:"title,omitempty"`
+	Title      string                `json:"title"`
 }
 
 type Properties struct {
 	Description string                `json:"description,omitempty"`
-	Title       string                `json:"title,omitempty"`
+	Title       string                `json:"title"`
 	Type        string                `json:"type,omitempty"`
 	Items       *Item                 `json:"items,omitempty"`
 	Properties  map[string]Properties `json:"properties,omitempty"`
@@ -101,32 +101,43 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 	}
 
 	//Generate the parameter properties based on the CRD
-	props := map[string]Properties{}
+	objMetaProps := map[string]Properties{}
 
-	props["objnamespace"] = Properties{
+	objMetaProps["objnamespace"] = Properties{
 		Description: "Namespace for the request in the platform cluster",
 		Title:       "Namespace",
 		Type:        "string",
 	}
 
-	props["objname"] = Properties{
+	objMetaProps["objname"] = Properties{
 		Description: "Name for the request in the platform cluster",
 		Title:       "Name",
 		Type:        "string",
 	}
 
-	props["spec"] = Properties{
-		Type:       "object",
-		Title:      "Spec",
-		Properties: map[string]Properties{},
+	template.Spec.Parameters = []Parameter{
+		{
+			Properties: objMetaProps,
+			Title:      strings.Title(rrCRD.Spec.Names.Kind) + " Instance Metadata",
+		},
 	}
 
 	for key, prop := range rrCRD.Spec.Versions[0].Schema.OpenAPIV3Schema.Properties["spec"].Properties {
+		specFieldProp := map[string]Properties{}
+		specFieldProp["spec"] = Properties{
+			Type:       "object",
+			Properties: map[string]Properties{},
+			Title:      "",
+		}
+
 		if prop.XPreserveUnknownFields == nil || !*prop.XPreserveUnknownFields {
-			props["spec"].Properties[key] = genProperties("", key, prop)
+			specFieldProp["spec"].Properties[key] = genProperties("", key, prop)
+			template.Spec.Parameters = append(template.Spec.Parameters, Parameter{
+				Properties: specFieldProp,
+				Title:      strings.Title(key),
+			})
 		}
 	}
-	fmt.Println(props)
 
 	sampleRRBytes, err := yamlsig.Marshal(rrManifestTemplate)
 	if err != nil {
@@ -135,12 +146,6 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 	}
 
 	template.Spec.Steps[0].Input.Manifest = string(sampleRRBytes)
-	template.Spec.Parameters = []Parameter{
-		{
-			Properties: props,
-			Title:      strings.Title(rrCRD.Spec.Names.Kind) + " as a Service",
-		},
-	}
 
 	//Convert to bytes
 	templateBytes, err := yamlsig.Marshal(template)
@@ -149,7 +154,8 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 
 	}
 
-	fmt.Println(string(templateBytes))
+	os.Remove("../test-debugging-output")
+	os.WriteFile("../test-debugging-output", templateBytes, 0777)
 
 	return os.WriteFile(filepath.Join(kratixDir, "output", "backstage", promise.GetName()+"-template.yaml"), templateBytes, 0777)
 }

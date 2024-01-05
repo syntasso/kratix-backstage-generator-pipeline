@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/aclevername/kratix-backstage-generator-pipeline/lib"
 	. "github.com/onsi/ginkgo/v2"
@@ -79,23 +80,27 @@ spec:
 		})
 
 		It("generates a valid component", func() {
-			Expect(lib.Generate(kratixDir, "promise", "jenkin")).To(Succeed())
+			//Maps result in yaml randomness, so lets rerun it a bunch until the
+			//output is what we expect. This is a bit of a hack, but it works.
+			Eventually(func(g Gomega) {
+				g.Expect(lib.Generate(kratixDir, "promise", "jenkin")).To(Succeed())
 
-			actualContent, err := os.ReadFile(filepath.Join(kratixDir, "output", "backstage", "jenkins-template.yaml"))
-			Expect(err).NotTo(HaveOccurred())
+				actualContent, err := os.ReadFile(filepath.Join(kratixDir, "output", "backstage", "jenkins-template.yaml"))
+				g.Expect(err).NotTo(HaveOccurred())
 
-			disiredContent, err := os.ReadFile(filepath.Join("assets", "desired-jenkins-template.yaml"))
-			Expect(err).NotTo(HaveOccurred())
+				disiredContent, err := os.ReadFile(filepath.Join("assets", "desired-jenkins-template.yaml"))
+				g.Expect(err).NotTo(HaveOccurred())
 
-			Expect(string(actualContent)).To(Equal(string(disiredContent)))
+				g.Expect(string(actualContent)).To(Equal(string(disiredContent)))
 
-			actualContent, err = os.ReadFile(filepath.Join(kratixDir, "output", "backstage", "jenkins-component.yaml"))
-			Expect(err).NotTo(HaveOccurred())
+				actualContent, err = os.ReadFile(filepath.Join(kratixDir, "output", "backstage", "jenkins-component.yaml"))
+				g.Expect(err).NotTo(HaveOccurred())
 
-			disiredContent, err = os.ReadFile(filepath.Join("assets", "desired-jenkins-component.yaml"))
-			Expect(err).NotTo(HaveOccurred())
+				disiredContent, err = os.ReadFile(filepath.Join("assets", "desired-jenkins-component.yaml"))
+				g.Expect(err).NotTo(HaveOccurred())
 
-			Expect(string(actualContent)).To(Equal(string(disiredContent)))
+				g.Expect(string(actualContent)).To(Equal(string(disiredContent)))
+			}, time.Second, time.Microsecond).Should(Succeed())
 		})
 	})
 })

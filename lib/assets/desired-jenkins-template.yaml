@@ -22,6 +22,8 @@ spec:
         description: Namespace for the request in the platform cluster
         title: Namespace
         type: string
+    title: Jenkin Instance Metadata
+  - properties:
       spec:
         properties:
           basicAuth:
@@ -36,11 +38,23 @@ spec:
                 type: string
             title: BasicAuth
             type: object
+        title: ""
+        type: object
+    title: BasicAuth
+  - properties:
+      spec:
+        properties:
           env:
             description: |
               Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
             title: Env
             type: string
+        title: ""
+        type: object
+    title: Env
+  - properties:
+      spec:
+        properties:
           plugins:
             description: Plugins to install in the requested Jenkins
             items:
@@ -61,9 +75,9 @@ spec:
               type: object
             title: Plugins
             type: array
-        title: Spec
+        title: ""
         type: object
-    title: Jenkin as a Service
+    title: Plugins
   steps:
   - action: kubernetes:apply
     id: k-apply
