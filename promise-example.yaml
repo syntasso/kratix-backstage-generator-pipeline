@@ -22,6 +22,10 @@ spec:
             properties:
               spec:
                 properties:
+                  config:
+                    type: object
+                    description: "additional config for jenkins"
+                    x-kubernetes-preserve-unknown-fields: true
                   env:
                     default: dev
                     description: |
@@ -30,6 +34,9 @@ spec:
                     type: string
                   basicAuth:
                     type: object
+                    required:
+                    - username
+                    - password
                     properties:
                       username:
                         type: string
@@ -38,7 +45,6 @@ spec:
                         type: string
                         description: Password for Jenkins
                   plugins:
-                    default: []
                     description: Plugins to install in the requested Jenkins
                     items:
                       description: Plugin defines a single Jenkins plugin.
@@ -90,3 +96,5 @@ spec:
           containers:
           - image: ghcr.io/syntasso/kratix-marketplace/jenkins-configure-pipeline:v0.1.0
             name: jenkins-configure-pipeline
+          - image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0
+            name: backstage

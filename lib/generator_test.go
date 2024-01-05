@@ -75,7 +75,7 @@ spec:
 
 	Describe("promise workflows", func() {
 		BeforeEach(func() {
-			err := copyFile(filepath.Join("assets", "promise.yaml"), filepath.Join(kratixDir, "input", "object.yaml"))
+			err := copyFile(filepath.Join("../", "promise-example.yaml"), filepath.Join(kratixDir, "input", "object.yaml"))
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -100,7 +100,7 @@ spec:
 				g.Expect(err).NotTo(HaveOccurred())
 
 				g.Expect(string(actualContent)).To(Equal(string(disiredContent)))
-			}, time.Second, time.Microsecond).Should(Succeed())
+			}, time.Second, time.Millisecond).Should(Succeed())
 		})
 	})
 })

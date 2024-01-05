@@ -60,6 +60,8 @@ type Properties struct {
 	Type        string                `json:"type,omitempty"`
 	Items       *Item                 `json:"items,omitempty"`
 	Properties  map[string]Properties `json:"properties,omitempty"`
+	Required    []string              `json:"required,omitempty"`
+	Default     interface{}           `json:"default,omitempty"`
 }
 
 type Item struct {
@@ -102,12 +104,7 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 
 	//Generate the parameter properties based on the CRD
 	objMetaProps := map[string]Properties{}
-
-	objMetaProps["objnamespace"] = Properties{
-		Description: "Namespace for the request in the platform cluster",
-		Title:       "Namespace",
-		Type:        "string",
-	}
+	requiredObjMeta := []string{"objname"}
 
 	objMetaProps["objname"] = Properties{
 		Description: "Name for the request in the platform cluster",
@@ -115,10 +112,20 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 		Type:        "string",
 	}
 
+	if rrCRD.Spec.Scope == v1.NamespaceScoped {
+		objMetaProps["objnamespace"] = Properties{
+			Description: "Namespace for the request in the platform cluster",
+			Title:       "Namespace",
+			Type:        "string",
+		}
+		requiredObjMeta = append(requiredObjMeta, "objnamespace")
+	}
+
 	template.Spec.Parameters = []Parameter{
 		{
 			Properties: objMetaProps,
 			Title:      strings.Title(rrCRD.Spec.Names.Kind) + " Instance Metadata",
+			Required:   requiredObjMeta,
 		},
 	}
 
@@ -164,7 +171,16 @@ func genProperties(prefix, key string, prop v1.JSONSchemaProps) Properties {
 	p := Properties{
 		Description: prop.Description,
 		Title:       prefix + strings.Title(key),
+		Required:    prop.Required,
 	}
+	if prop.Default != nil {
+		p.Default = prop.Default
+	}
+
+	if prop.Pattern != "" {
+		p.Description = fmt.Sprintf("%s Must match regular expression '%s'", p.Description, prop.Pattern)
+	}
+
 	p.Type = prop.Type
 
 	switch p.Type {

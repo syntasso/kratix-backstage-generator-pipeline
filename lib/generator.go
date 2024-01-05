@@ -12,8 +12,6 @@ import (
 
 func Generate(kratixDir, workflowType, promiseName string) error {
 	kratixInputObject := filepath.Join(kratixDir, "input", "object.yaml")
-	fmt.Println("KRATIX_INPUT_DIR: " + kratixInputObject)
-
 	f, err := os.Open(kratixInputObject)
 	if err != nil {
 		return err

@@ -22,6 +22,9 @@ spec:
         description: Namespace for the request in the platform cluster
         title: Namespace
         type: string
+    required:
+    - objname
+    - objnamespace
     title: Jenkin Instance Metadata
   - properties:
       spec:
@@ -36,6 +39,9 @@ spec:
                 description: Username for Jenkins
                 title: BasicAuth.Username
                 type: string
+            required:
+            - username
+            - password
             title: BasicAuth
             type: object
         title: ""
@@ -45,8 +51,10 @@ spec:
       spec:
         properties:
           env:
-            description: |
+            default: dev
+            description: |-
               Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
+               Must match regular expression '^(dev|prod)$'
             title: Env
             type: string
         title: ""
