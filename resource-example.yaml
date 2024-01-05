@@ -1,0 +1,13 @@
+apiVersion: marketplace.kratix.io/v1alpha1
+kind: jenkin
+metadata:
+  name: my-request
+  namespace: default
+spec:
+  cluster:
+    env: dev
+    size: small
+  basicAuth:
+    username: foo
+    password: bar
+

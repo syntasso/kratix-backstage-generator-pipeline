@@ -10,9 +10,18 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func Generate(kratixDir, workflowType, promiseName string) error {
-	kratixInputObject := filepath.Join(kratixDir, "input", "object.yaml")
-	f, err := os.Open(kratixInputObject)
+type Opts struct {
+	RunningInPipeline bool
+	OutputDirectory   string
+	MetadataDirectory string
+	Input             string
+	//if its not a Promise its assumed its a resource request
+	IsPromise   bool
+	PromiseName string
+}
+
+func Generate(o Opts) error {
+	f, err := os.Open(o.Input)
 	if err != nil {
 		return err
 	}
@@ -20,20 +29,22 @@ func Generate(kratixDir, workflowType, promiseName string) error {
 
 	decoder := yaml.NewYAMLOrJSONDecoder(f, 2048)
 
-	err = os.WriteFile(filepath.Join(kratixDir, "metadata", "destination-selectors.yaml"), []byte(`- directory: backstage
+	if o.RunningInPipeline {
+		err = os.WriteFile(filepath.Join(o.MetadataDirectory, "destination-selectors.yaml"), []byte(`- directory: backstage
   matchLabels:
     environment: backstage`), 0777)
-	if err != nil {
-		return fmt.Errorf("failed to write scheduling file: %w", err)
+		if err != nil {
+			return fmt.Errorf("failed to write scheduling file: %w", err)
+		}
 	}
 
-	if workflowType == "promise" {
+	if o.IsPromise {
 		promise := &v1alpha1.Promise{}
 		err = decoder.Decode(promise)
 		if err != nil {
 			return err
 		}
-		err = generatePromiseEntities(kratixDir, promise)
+		err = generatePromiseEntities(o, promise)
 
 		if err != nil {
 			return err
@@ -47,14 +58,14 @@ func Generate(kratixDir, workflowType, promiseName string) error {
 		return err
 	}
 
-	err = generateResourceEntities(kratixDir, promiseName, object)
+	err = generateResourceEntities(o, object)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func generatePromiseEntities(kratixDir string, promise *v1alpha1.Promise) error {
+func generatePromiseEntities(o Opts, promise *v1alpha1.Promise) error {
 	componentBytes := []byte(fmt.Sprintf(`---
 apiVersion: backstage.io/v1alpha1
 kind: Component
@@ -78,7 +89,7 @@ spec:
   type: promise
 `, promise.GetName())) //TODO change last arg to be upper case
 
-	backstageDir := filepath.Join(kratixDir, "output", "backstage")
+	backstageDir := filepath.Join(o.OutputDirectory, "backstage")
 	err := os.MkdirAll(backstageDir, 0777)
 	if err != nil {
 		return err
@@ -88,10 +99,10 @@ spec:
 		return fmt.Errorf("failed to write component file: %w", err)
 	}
 
-	return generateTemplate(kratixDir, promise)
+	return generateTemplate(o, promise)
 }
 
-func generateResourceEntities(kratixDir, promiseName string, us *unstructured.Unstructured) error {
+func generateResourceEntities(o Opts, us *unstructured.Unstructured) error {
 	componentBytes := []byte(fmt.Sprintf(`---
 apiVersion: backstage.io/v1alpha1
 kind: Component
@@ -113,9 +124,9 @@ spec:
     - component:default/%[1]s
   providesApis:
     - namespace-server-api
-`, promiseName, us.GetName())) //TODO change last arg to be upper case
+`, o.PromiseName, us.GetName())) //TODO change last arg to be upper case
 
-	backstageDir := filepath.Join(kratixDir, "output", "backstage")
+	backstageDir := filepath.Join(o.OutputDirectory, "backstage")
 	err := os.MkdirAll(backstageDir, 0777)
 	if err != nil {
 		return err

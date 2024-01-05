@@ -8,6 +8,39 @@ for setting up Backstage.
 
 ## Usage
 
+### Locally generate backstage documents
+This binary is intended to be ran as part of your configure pipeline for your
+Promise and Resource workflows. However if you want to manually generate the
+files so that you can edit them and manually place them in backstage or to your
+pipelines output you can do that locally.
+
+```bash
+go build main.go
+```
+
+####  Promise
+
+```
+./main --file-type promise --filepath promise-example.yaml -output-directory test-dir
+tree test-dir
+test-dir
+└── backstage
+    ├── jenkins-component.yaml
+    └── jenkins-template.yaml
+```
+
+####  Resource
+
+```
+./main --file-type resource --filepath resource-example.yaml  --promise-name jenkin -output-directory test-dir
+tree test-dir
+test-dir
+└── backstage
+    └── my-request-component.yaml
+```
+
+### (RECOMMENDED) Auto-generate at Promise/Resource Configure time
+
 Update your promises to have the following in its the Promise and Resource
 workflows
 
@@ -15,6 +48,10 @@ workflows
 - image: ghcr.io/syntasso/kratix-backstage-generator-pipeline:v0.1.0
   name: backstage
 ```
+
+You must have a Destination created with the `environment: backstage` label. See
+[Backstage docs](https://docs.kratix.io/main/reference/backstage/intro) for
+setting up.
 
 
 ## Example
@@ -48,10 +85,6 @@ example   Resource requested
 
 And a component being added to Backstage:
 ![Resource Component](assets/resource-component.png)
-
-
-
-
 
 ## Limitations
 - CRD fields with `x-kubernetes-preserve-unknown-fields` set to `true` will

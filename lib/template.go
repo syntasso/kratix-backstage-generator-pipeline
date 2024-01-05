@@ -76,7 +76,7 @@ type RR struct {
 	Spec              string `json:"spec,omitempty"`
 }
 
-func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
+func generateTemplate(o Opts, promise *v1alpha1.Promise) error {
 	rrCRD := &v1.CustomResourceDefinition{}
 	if err := json.Unmarshal(promise.Spec.API.Raw, rrCRD); err != nil {
 		return fmt.Errorf("api is not a valid CRD: %w", err)
@@ -165,7 +165,7 @@ func generateTemplate(kratixDir string, promise *v1alpha1.Promise) error {
 	os.Remove("../test-debugging-output")
 	os.WriteFile("../test-debugging-output", templateBytes, 0777)
 
-	return os.WriteFile(filepath.Join(kratixDir, "output", "backstage", promise.GetName()+"-template.yaml"), templateBytes, 0777)
+	return os.WriteFile(filepath.Join(o.OutputDirectory, "backstage", promise.GetName()+"-template.yaml"), templateBytes, 0777)
 }
 
 func genProperties(prefix, key string, prop v1.JSONSchemaProps) Properties {

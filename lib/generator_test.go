@@ -12,7 +12,11 @@ import (
 )
 
 var _ = Describe("Generator", func() {
-	var kratixDir string
+	var (
+		kratixDir string
+		opts      lib.Opts
+	)
+
 	BeforeEach(func() {
 		var err error
 		kratixDir, err = os.MkdirTemp(os.TempDir(), "generator")
@@ -20,6 +24,15 @@ var _ = Describe("Generator", func() {
 		os.MkdirAll(filepath.Join(kratixDir, "output"), 0777)
 		os.MkdirAll(filepath.Join(kratixDir, "input"), 0777)
 		os.MkdirAll(filepath.Join(kratixDir, "metadata"), 0777)
+
+		opts = lib.Opts{
+			RunningInPipeline: true,
+			PromiseName:       "redis",
+			Input:             filepath.Join(kratixDir, "input", "object.yaml"),
+			MetadataDirectory: filepath.Join(kratixDir, "metadata"),
+			IsPromise:         false,
+			OutputDirectory:   filepath.Join(kratixDir, "output"),
+		}
 	})
 
 	AfterEach(func() {
@@ -38,7 +51,7 @@ metadata:
 		})
 
 		It("generates a valid component", func() {
-			Expect(lib.Generate(kratixDir, "resource", "redis")).To(Succeed())
+			Expect(lib.Generate(opts)).To(Succeed())
 
 			fileContent, err := os.ReadFile(filepath.Join(kratixDir, "metadata", "destination-selectors.yaml"))
 			Expect(err).NotTo(HaveOccurred())
@@ -77,13 +90,16 @@ spec:
 		BeforeEach(func() {
 			err := copyFile(filepath.Join("../", "promise-example.yaml"), filepath.Join(kratixDir, "input", "object.yaml"))
 			Expect(err).NotTo(HaveOccurred())
+
+			opts.PromiseName = "jenkins"
+			opts.IsPromise = true
 		})
 
 		It("generates a valid component", func() {
 			//Maps result in yaml randomness, so lets rerun it a bunch until the
 			//output is what we expect. This is a bit of a hack, but it works.
 			Eventually(func(g Gomega) {
-				g.Expect(lib.Generate(kratixDir, "promise", "jenkin")).To(Succeed())
+				g.Expect(lib.Generate(opts)).To(Succeed())
 
 				actualContent, err := os.ReadFile(filepath.Join(kratixDir, "output", "backstage", "jenkins-template.yaml"))
 				g.Expect(err).NotTo(HaveOccurred())
