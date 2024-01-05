@@ -62,6 +62,7 @@ type Properties struct {
 	Properties  map[string]Properties `json:"properties,omitempty"`
 	Required    []string              `json:"required,omitempty"`
 	Default     interface{}           `json:"default,omitempty"`
+	ENUM        []interface{}         `json:"enum,omitempty"`
 }
 
 type Item struct {
@@ -173,6 +174,13 @@ func genProperties(prefix, key string, prop v1.JSONSchemaProps) Properties {
 		Title:       prefix + strings.Title(key),
 		Required:    prop.Required,
 	}
+
+	if len(prop.Enum) > 0 {
+		for _, enum := range prop.Enum {
+			p.ENUM = append(p.ENUM, enum)
+		}
+	}
+
 	if prop.Default != nil {
 		p.Default = prop.Default
 	}

@@ -26,12 +26,27 @@ spec:
                     type: object
                     description: "additional config for jenkins"
                     x-kubernetes-preserve-unknown-fields: true
-                  env:
-                    default: dev
-                    description: |
-                      Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
-                    pattern: ^(dev|prod)$
-                    type: string
+                  cluster:
+                    type: object
+                    required:
+                    - env
+                    - size
+                    properties:
+                      env:
+                        default: dev
+                        description: |
+                          Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
+                        pattern: ^(dev|prod)$
+                        type: string
+                      size:
+                        default: small
+                        description: |
+                          Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
+                        enum:
+                        - small
+                        - medium
+                        - large
+                        type: string
                   basicAuth:
                     type: object
                     required:

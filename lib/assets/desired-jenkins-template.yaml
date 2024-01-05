@@ -50,16 +50,33 @@ spec:
   - properties:
       spec:
         properties:
-          env:
-            default: dev
-            description: |-
-              Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
-               Must match regular expression '^(dev|prod)$'
-            title: Env
-            type: string
+          cluster:
+            properties:
+              env:
+                default: dev
+                description: |-
+                  Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
+                   Must match regular expression '^(dev|prod)$'
+                title: Cluster.Env
+                type: string
+              size:
+                default: small
+                description: |
+                  Configures and deploys this Jenkins with Environment specific configuration. Prod Jenkins comes with Backups pre-configured.
+                enum:
+                - small
+                - medium
+                - large
+                title: Cluster.Size
+                type: string
+            required:
+            - env
+            - size
+            title: Cluster
+            type: object
         title: ""
         type: object
-    title: Env
+    title: Cluster
   - properties:
       spec:
         properties:
